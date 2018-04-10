@@ -24,6 +24,23 @@ func toUtf8(str string, t transform.Transformer) (string, error) {
 	return string(ret), err
 }
 
+func extractItem(item *zip.File, path string) error {
+	output, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer output.Close()
+	fp, err := item.Open()
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+	if _, err := io.Copy(output, fp); err != nil {
+		return err
+	}
+	return nil
+}
+
 func unzip(src, dest string, t transform.Transformer) error {
 	zc, err := zip.OpenReader(src)
 	if err != nil {
@@ -42,17 +59,7 @@ func unzip(src, dest string, t transform.Transformer) error {
 				return err
 			}
 		} else {
-			output, err := os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer output.Close()
-			fp, err := item.Open()
-			if err != nil {
-				return err
-			}
-			defer fp.Close()
-			if _, err := io.Copy(output, fp); err != nil {
+			if err := extractItem(item, path); err != nil {
 				return err
 			}
 		}
